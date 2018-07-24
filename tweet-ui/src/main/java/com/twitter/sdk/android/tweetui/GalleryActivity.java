@@ -18,6 +18,7 @@
 package com.twitter.sdk.android.tweetui;
 
 import android.app.Activity;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.view.ViewPager;
 
@@ -38,9 +39,13 @@ public class GalleryActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.tw__gallery_activity);
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            postponeEnterTransition();
+        }
+
         galleryItem = getGalleryItem();
 
-        final GalleryAdapter adapter = new GalleryAdapter(this, getSwipeToDismissCallback());
+        final GalleryAdapter adapter = new GalleryAdapter(this, getSwipeToDismissCallback(), galleryItem.mediaEntityIndex);
         adapter.addAll(galleryItem.mediaEntities);
 
         final ViewPager viewPager = findViewById(R.id.tw__view_pager);
@@ -79,8 +84,9 @@ public class GalleryActivity extends Activity {
        return new SwipeToDismissTouchListener.Callback() {
            @Override
            public void onDismiss() {
-               finish();
-               overridePendingTransition(0, R.anim.tw__slide_out);
+               // finish();
+               // finishAfterTransition();
+               onBackPressed();
            }
 
            @Override
@@ -96,12 +102,6 @@ public class GalleryActivity extends Activity {
         }
 
         return (GalleryItem) getIntent().getSerializableExtra(GALLERY_ITEM);
-    }
-
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        overridePendingTransition(0, R.anim.tw__slide_out);
     }
 
     public static class GalleryItem implements Serializable {

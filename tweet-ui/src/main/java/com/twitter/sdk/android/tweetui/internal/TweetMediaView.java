@@ -17,6 +17,8 @@
 
 package com.twitter.sdk.android.tweetui.internal;
 
+import android.app.Activity;
+import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Canvas;
@@ -24,6 +26,8 @@ import android.graphics.Color;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.os.Build;
+import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
@@ -167,7 +171,7 @@ public class TweetMediaView extends ViewGroup implements View.OnClickListener {
             if (TweetMediaUtils.isVideoType(mediaEntity)) {
                 launchVideoPlayer(mediaEntity);
             } else if (TweetMediaUtils.isPhotoType(mediaEntity)) {
-                launchPhotoGallery(mediaEntityIndex);
+                launchPhotoGallery(view, mediaEntityIndex);
             }
         } else {
             launchVideoPlayer(tweet);
@@ -201,12 +205,15 @@ public class TweetMediaView extends ViewGroup implements View.OnClickListener {
         IntentUtils.safeStartActivity(getContext(), intent);
     }
 
-    public void launchPhotoGallery(int mediaEntityIndex) {
+    public void launchPhotoGallery(@NonNull View view, int mediaEntityIndex) {
         final Intent intent = new Intent(getContext(), GalleryActivity.class);
         final GalleryActivity.GalleryItem item =
                 new GalleryActivity.GalleryItem(tweet.id, mediaEntityIndex, mediaEntities);
         intent.putExtra(GalleryActivity.GALLERY_ITEM, item);
-        IntentUtils.safeStartActivity(getContext(), intent);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            Bundle options = ActivityOptions.makeSceneTransitionAnimation(((Activity) getContext()), view, "image").toBundle();
+            getContext().startActivity(intent, options);
+        }
     }
 
     public void setTweetMediaEntities(Tweet tweet, List<MediaEntity> mediaEntities) {
@@ -333,6 +340,10 @@ public class TweetMediaView extends ViewGroup implements View.OnClickListener {
 
         for (int index = 0; index < imageCount; index++) {
             final OverlayImageView imageView = getOrCreateImageView(index);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                imageView.setTransitionName("image");
+            }
 
             final MediaEntity mediaEntity = mediaEntities.get(index);
             setAltText(imageView, mediaEntity.altText);

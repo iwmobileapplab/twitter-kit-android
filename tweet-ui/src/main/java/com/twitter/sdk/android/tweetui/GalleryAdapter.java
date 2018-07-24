@@ -17,10 +17,13 @@
 
 package com.twitter.sdk.android.tweetui;
 
+import android.app.Activity;
 import android.content.Context;
+import android.os.Build;
 import android.support.v4.view.PagerAdapter;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 
 import com.squareup.picasso.Picasso;
 import com.twitter.sdk.android.core.models.MediaEntity;
@@ -34,10 +37,16 @@ class GalleryAdapter extends PagerAdapter {
     final List<MediaEntity> items = new ArrayList<>();
     final Context context;
     final SwipeToDismissTouchListener.Callback callback;
+    int defaultItemIndex;
 
     GalleryAdapter(Context context, SwipeToDismissTouchListener.Callback callback) {
         this.context = context;
         this.callback = callback;
+    }
+
+    GalleryAdapter(Context context, SwipeToDismissTouchListener.Callback callback, int defaultItemIndex) {
+        this(context,callback);
+        this.defaultItemIndex = defaultItemIndex;
     }
 
     void addAll(List<MediaEntity> entities) {
@@ -58,6 +67,25 @@ class GalleryAdapter extends PagerAdapter {
     @Override
     public Object instantiateItem(ViewGroup container, int position) {
         final GalleryImageView root = new GalleryImageView(context);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            if(defaultItemIndex == position){
+                root.setTransitionName("image");
+                root.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+                    @Override
+                    public boolean onPreDraw() {
+                        root.getViewTreeObserver().removeOnPreDrawListener(this);
+                        if (context instanceof Activity) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                                ((Activity) context).startPostponedEnterTransition();
+                            }
+                        }
+                        return true;
+                    }
+                });
+            }
+        }
+
         root.setSwipeToDismissCallback(callback);
 
         container.addView(root);
